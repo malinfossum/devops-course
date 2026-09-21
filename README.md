@@ -1,4 +1,4 @@
-# devops-course
+# DevOps Course
 
 My work for the two-week DevOps mini course in GET Prepared (September 2026): a containerised .NET API with PostgreSQL, then CI/CD with GitHub Actions.
 
