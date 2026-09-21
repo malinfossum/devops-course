@@ -1,0 +1,23 @@
+{
+  "name": "devops-course",
+  "image": "mcr.microsoft.com/devcontainers/dotnet:10.0",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "forwardPorts": [8080, 8081, 5432],
+  "portsAttributes": {
+    "8080": { "label": "api / nginx" },
+    "8081": { "label": "nginx 2" },
+    "5432": { "label": "postgres" }
+  },
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-dotnettools.csdevkit",
+        "ms-azuretools.vscode-docker"
+      ]
+    }
+  }
+}

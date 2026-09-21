@@ -1,0 +1,11 @@
+# .NET build output
+bin/
+obj/
+*.user
+
+# IDE
+.idea/
+.vs/
+
+# Secrets stay local
+.env
