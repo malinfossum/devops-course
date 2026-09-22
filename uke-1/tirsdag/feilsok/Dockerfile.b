@@ -1,0 +1,29 @@
+# Task 4B: wrong COPY source path (stage 1 publishes to /app/publish, not /src/app/publish)
+# Stage 1: SDK bygger og tester
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /src
+
+COPY LabApi.slnx ./
+COPY LabApi.csproj ./
+COPY tests/LabApi.Tests/LabApi.Tests.csproj tests/LabApi.Tests/
+RUN dotnet restore
+
+COPY . .
+RUN dotnet test tests/LabApi.Tests/LabApi.Tests.csproj -c Release --no-restore
+RUN dotnet publish LabApi.csproj -c Release -o /app/publish
+
+# Stage 2: kun runtime og publish-output
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y libkrb5-3 wget && rm -rf /var/lib/apt/lists/*
+
+COPY --from=build /src/app/publish ./bin
+
+RUN useradd -m appuser
+USER appuser
+
+ENV ASPNETCORE_URLS=http://0.0.0.0:8080
+EXPOSE 8080
+
+ENTRYPOINT ["dotnet", "LabApi.dll"]
