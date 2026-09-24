@@ -50,6 +50,17 @@ Endret `[InlineData(7, 7)]` til `[InlineData(7, 8)]` i `PagingTests.cs`, pushet 
    - `docker`-jobben trenger `needs:` fordi jobber kjører parallelt på hver sin maskin; uten `needs:`
      starter den samtidig med format og build og kan pushe et image før testene er grønne.
 
+## Oppgave 3 (valgfri) — manuell trigger
+
+`hei.yml` ligger i dette repoet (ikke i Varde, der ville den bare vært støy). Kjørt med «Run workflow»:
+
+```
+Hei! Repo: malinfossum/devops-course
+Commit 5f55e01aafcf7884d58c51aca01a67051bfbc46e på grein main
+```
+
+Maskinen i skyen visste repo, commit og grein uten at jeg sa det. `github.sha` blir imagets tag i morgen.
+
 ## Huskelista
 
 - [x] Repo-rota = prosjektet — workflowen blir faktisk trigget
