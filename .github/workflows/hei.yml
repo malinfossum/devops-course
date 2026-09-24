@@ -1,0 +1,12 @@
+name: Hei
+
+on: workflow_dispatch
+
+jobs:
+  hei:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Si hei fra skyen
+        run: |
+          echo "Hei! Repo: ${{ github.repository }}"
+          echo "Commit ${{ github.sha }} på grein ${{ github.ref_name }}"
