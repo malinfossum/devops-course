@@ -28,7 +28,9 @@ podman run --rm hello
 podman run --rm hello
 ```
 
-**Observert:** ___ (to kjøringer, samme tekst, ulik klokke)
+**Observert (kjørt 24.09):** `Hello from a container! Klokken er 09/24/2026 09:26:38`, så `… 09:26:39`.
+Samme tekst, ett sekund mellom. Datoen står i amerikansk format: containeren har ingen norsk
+kultur-innstilling, så .NET faller tilbake på invariant kultur.
 
 **Refleksjon:** Klokken er ulik fordi programmet kjører på nytt hver gang; alt annet er likt fordi
 imaget er en frossen, skrivebeskyttet mal — hver `run` lager en ny container fra nøyaktig de samme
@@ -46,7 +48,15 @@ podman images hello
 podman images hello-naiv
 ```
 
-**Observert:** `hello` ___ MB · `hello-naiv` ___ MB
+**Observert:**
+
+| Image | Content size | Disk usage |
+|---|---|---|
+| `hello` | 83.2 MB | 300 MB |
+| `hello-naiv` | 351 MB | 1.3 GB |
+
+`docker images` viser to tall: *content size* er de komprimerte lagene (det som lastes ned og
+pushes), *disk usage* er utpakket på disk. Det naive imaget er drøyt fire ganger så stort på begge.
 
 **Refleksjon:** Det naive imaget har med (1) hele SDK-en — compiler, MSBuild, NuGet-klient — som
 bare trengs for å bygge, (2) kildekoden (`Program.cs`, `.csproj`), (3) `obj/`-mellomprodukter og
