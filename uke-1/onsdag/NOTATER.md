@@ -1,7 +1,9 @@
 # Onsdag 23.09 — notater
 
 Kjørt i Codespacet (`podman` = alias for `docker`). Min compose-fil ligger i
-`uke-1/onsdag/compose.yml`. Tall merket `___` fylles inn fra terminalen.
+`uke-1/onsdag/compose.yml`. Tallene er fylt inn fra terminalen 25.09. Kursrepoet fjernet
+`labApi/.env.example` 24.09, så `.env` skrev jeg selv (`POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`,
+pluss `PGADMIN_DEFAULT_*` for å stilne advarslene fra `tools`-profilen).
 
 ## Oppgave 0: Tirsdagens gjeld
 
@@ -26,7 +28,7 @@ podman compose exec db psql -U labuser -d labapp
 
 I psql: `\dt` (ingen tabeller ennå) · `SELECT version();` · `\q`
 
-**Observert:** version() = ___
+**Observert:** version() = `PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on x86_64-pc-linux-gnu`
 
 **Refleksjon:** En komplett PostgreSQL-server på under ett minutt, uten apt, uten `pg_hba.conf`,
 uten tjeneste å konfigurere. Alt som var oppsett i `2.PostgreSQL-Setup` er nå tre env-variabler
@@ -42,7 +44,10 @@ curl http://localhost:8080/api/products    # 10 seedede produkter
 podman compose logs api                    # hvis noe feiler
 ```
 
-**Observert:** `/health` → ___ · antall produkter ___
+**Observert:** `/health` → 200 · antall produkter 10
+
+Felle jeg gikk i: var noe annet allerede bundet til 8080 (en annen stack), startet bare `db`, og
+`api` sto som «not running» — da finnes heller ingen `Products`-tabell, siden det er API-et som migrerer.
 
 Valg jeg tok: `build: .` (kortform) og ingen `container_name`, `restart` eller ressursgrenser —
 det kommer torsdag. `db` har ingen `ports:` med vilje.
@@ -63,8 +68,8 @@ podman compose exec db psql -U labuser -d labapp -c 'SELECT * FROM "Products";' 
 **Observert:**
 
 - A: `podman ps` viser `0.0.0.0:8080->8080/tcp` på api, ingenting på db. (Ingen `psql` på verten.)
-- B: `getent hosts db` → ___ (en 172.x-adresse på compose-nettverket).
-- C: etter `down`/`up`: raden ___ · etter `down -v`/`up`: raden ___.
+- B: `getent hosts db` → `172.18.0.2      db` (compose-nettverket).
+- C: etter `down`/`up`: raden er der (1 treff) · etter `down -v`/`up`: raden er borte (0 treff).
 
 **Refleksjon:** `down` fjerner containere og nettverk, men volumet `postgres_data` består —
 dataene ligger i volumet, ikke i containeren. `down -v` sletter volumet også; det er full reset,
@@ -77,7 +82,7 @@ podman compose down
 time (podman compose up -d && until curl -sf http://localhost:8080/health; do sleep 1; done)
 ```
 
-**Observert:** `up -d` → `/health` 200 på ___ sekunder.
+**Observert:** `up -d` → `/health` 200 på 12,7 sekunder (fra `down`, imagene bygd fra før).
 
 Kodeendring: nytt produkt i seed-lista i `Data/DbInitializer.cs`, så:
 

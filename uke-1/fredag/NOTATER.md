@@ -1,13 +1,14 @@
 # Fredag 25.09 — notater (handoff kl. 15:00)
 
-Prosjekt: **Varde**, branch `feat/containerise` (`malinfossum/varde`). Filene er skrevet
-torsdag; fredagen går til å kjøre dem, bevise hardening og få runbooken peer-testet.
+Prosjekt: **Varde** (`malinfossum/varde`). Filene ble skrevet torsdag på `feat/containerise` og
+merget i PR #24; fredagen går til å kjøre dem, bevise hardening og få runbooken peer-testet.
+Kjørt i Codespacet 25.09.
 
 Oppsett i Codespacet:
 
 ```bash
 gh repo clone malinfossum/varde /workspaces/varde
-cd /workspaces/varde && git checkout feat/containerise
+cd /workspaces/varde
 cp .env.example .env          # sett et ekte passord
 git check-ignore -v .env && git status --short   # .env skal ikke stå i lista
 ```
@@ -25,7 +26,10 @@ podman images | grep varde
 podman run --rm -p 8080:8080 --name vardetest varde   # klager på databasen — det er meningen
 ```
 
-**Observert:** `varde` ___ MB · `varde-naiv` ___ MB · feilmelding uten db: ___
+**Observert:** `varde` 103 MB · `varde-naiv` 534 MB (content size; på disk 368 MB mot 1,8 GB) ·
+feilmelding uten db: `System.InvalidOperationException: ConnectionStrings:VardeDb is not configured.`
+Varde stopper før den prøver å koble til — i motsetning til labApi har den ingen
+`localhost`-standard i `appsettings.json`, så feilen sier *hva* som mangler, ikke *hvor* den lette.
 
 Valg jeg tok, og hvorfor de avviker fra malen:
 
@@ -48,7 +52,18 @@ curl "http://localhost:8080/api/resources?query=helse"   # eller et annet ekte e
 podman compose logs api
 ```
 
-**Observert:** `/health` → ___ · begge healthy: ___
+**Observert:** `/health` → 200 (`{"status":"ok","version":"dev",…}`), søk → 200 · begge healthy:
+**nei** først. `db` ble healthy, men `api` gikk fra `health: starting` til `unhealthy` etter drøyt ett
+minutt, selv om `curl /health` ga 200 hele tiden.
+
+Årsaken: healthchecken brukte `wget --spider`, som sender **HEAD**. `/health` er registrert med
+`MapGet`, så HEAD gir 405, og wget melder «Remote file does not exist -- broken link!!!». Bevis:
+`curl -I /health` → 405, `curl /health` → 200. Fiks: vanlig GET (`--output-document=/dev/null`) —
+samme felle som kursets egen `labApi/compose.yml` kommenterer. Etter fiksen: begge healthy på 45 s.
+
+I samme logg: `libgssapi_krb5.so.2: cannot open shared object file`. Dockerfilen installerte
+`libkrb5-3`, men fila Npgsql laster ligger i `libgssapi-krb5-2`. Byttet pakke, feilmeldingen borte.
+Begge fiksene: Varde PR #28.
 
 Connection stringen heter `ConnectionStrings__VardeDb`, ikke `__DefaultConnection` — Varde
 leser `GetConnectionString("VardeDb")`. Dobbel underscore fordi `:` ikke er lovlig i et
@@ -67,10 +82,17 @@ podman compose kill api && sleep 5 && podman compose ps         # restart: unles
 podman inspect varde-api --format '{{.RestartCount}}'           # ventet på db, ikke restartet
 ```
 
-**Observert:** id → ___ · minne → ___ · etter kill → ___ · RestartCount → ___
+**Observert:** id → `uid=1655(appuser)` · minne → 536870912 (512 MiB) · etter kill → `Exited (137)`,
+**ikke** startet igjen · RestartCount → 0.
 
-Bonus `read_only: true` + `tmpfs: /tmp` + `no-new-privileges` + `cap_drop: ALL`: prøves til
-slutt, og resultatet noteres her — også hvis det brekker noe.
+`compose kill` går gjennom Docker og teller som en manuell stopp, og da gjelder ikke
+`unless-stopped`. En ekte krasj — `kill -9` på prosessen utenfra, forbi Docker — ga
+`RestartCount=1` og containeren oppe igjen. Restart-policyen virker; testen må simulere en krasj,
+ikke en stopp.
+
+Bonus `read_only: true` + `tmpfs: /tmp` + `no-new-privileges` + `cap_drop: ALL`: prøvd med en
+override-fil (`compose -f compose.yml -f harden.yml`). **Brekker ingenting:** `api` healthy,
+`/health` og søk 200, ingen skrivefeil i loggen. Ikke lagt inn i `compose.yml` ennå.
 
 ## Steg 6: Runbook og peer-test
 
@@ -81,9 +103,9 @@ Peer-test: ___ (hvem, og hva de måtte spørre om — hvert spørsmål er en lin
 
 ## Handoff-sjekklisten
 
-1. [x] Repo på GitHub — `malinfossum/varde`, branch `feat/containerise`
+1. [x] Repo på GitHub — `malinfossum/varde` (PR #24)
 2. [x] Multi-stage Dockerfile for eget prosjekt (non-root, alle csproj + `.slnx` før restore)
-3. [ ] `podman compose up -d` starter `api` + `db` stabilt
-4. [ ] `/health` → 200 på 8080
+3. [x] `podman compose up -d` starter `api` + `db` stabilt — etter healthcheck-fiksen i PR #28
+4. [x] `/health` → 200 på 8080
 5. [x] `.env` utenfor Git, `.env.example` i Git
 6. [ ] Runbook testet av en annen

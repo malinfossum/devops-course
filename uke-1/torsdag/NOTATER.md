@@ -1,7 +1,7 @@
 # Torsdag 24.09 — notater
 
 Eget prosjekt for containeriseringen: **Varde** (`malinfossum/varde`), den tospråklige
-tjenestekatalogen. Arbeidet ligger på branchen `feat/containerise` — ikke merget til `main`.
+tjenestekatalogen. Arbeidet ble gjort på branchen `feat/containerise` og er merget til `main` (PR #24).
 
 ## Steg 0: Kartlegging
 
@@ -48,7 +48,7 @@ ville kollidert.
 **Bevis mot tom database (kjøres i Codespacet):**
 
 ```bash
-cd /workspaces/varde          # gh repo clone malinfossum/varde, branch feat/containerise
+cd /workspaces/varde          # gh repo clone malinfossum/varde (main)
 podman run -d --name devdb -e POSTGRES_DB=devdb -e POSTGRES_USER=devuser \
   -e POSTGRES_PASSWORD=devpass -p 5432:5432 docker.io/library/postgres:16
 cd api && ConnectionStrings__VardeDb="Host=localhost;Port=5432;Database=devdb;Username=devuser;Password=devpass" \
@@ -59,7 +59,9 @@ podman exec -it devdb psql -U devuser -d devdb -c '\dt'
 podman rm -f devdb
 ```
 
-**Observert:** `/health` → ___ · tabeller uten `database update`: ___
+**Observert:** `/health` → 200 · tabeller uten `database update`: 0 før oppstart, 8 etter —
+`Categories`, `CategoryTranslations`, `Municipalities`, `ResourceCategories`,
+`ResourceMunicipalities`, `ResourceTranslations`, `Resources` og `__EFMigrationsHistory`.
 
 ## Dagens leveranse
 

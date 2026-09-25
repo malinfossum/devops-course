@@ -76,8 +76,8 @@ podman build -t hello .                    # 2.4, andre gang
 
 **Observert:**
 
-- 2.2: `CACHED` på ___ (forventet: FROM, WORKDIR, COPY csproj, RUN restore); bygget på nytt: COPY . . og publish.
-- 2.3: etter Humanizer bygges ___ på nytt (forventet: fra COPY csproj og nedover — `.csproj` endret seg).
+- 2.2: `CACHED` på WORKDIR, COPY csproj og RUN restore (FROM-linjene hentes fra de lokale imagene); bygget på nytt: COPY . ., publish og `COPY --from` i stage 2.
+- 2.3: etter Humanizer bygges COPY csproj, restore, COPY . ., publish og `COPY --from` på nytt — alt fra COPY csproj og nedover, fordi `.csproj` endret seg. Bare WORKDIR var cachet.
 - 2.4: første bygg — lagene over `echo` cachet, `echo` og alt under bygget på nytt. Andre bygg — alt cachet, også `echo`.
 
 **Refleksjon, regelen i én setning:** Et lag gjenbrukes bare når instruksjonen og alle lagene over
@@ -102,8 +102,8 @@ podman images labapi                               # ← skjermdump: oppgave-3.p
 IDE-mapper, `Dockerfile`, `compose*.yml` og `*.md`. Det jeg savnet: `tests/` — testene trengs ikke
 i publish-imaget mitt, men fasiten kjører dem i bygget, så de må med der. Ellers komplett.
 
-**3.4 Hva API-et klager over:** ___ (forventet: `Npgsql.NpgsqlException … Connection refused
-127.0.0.1:5432`). Appen kjører `MigrateAsync()` ved oppstart, og `appsettings.json` peker på
+**3.4 Hva API-et klager over:** `Npgsql.NpgsqlException (0x80004005): Failed to connect to 127.0.0.1:5432`,
+med `SocketException (111): Connection refused` under. Appen kjører `MigrateAsync()` ved oppstart, og `appsettings.json` peker på
 `Host=localhost` — inne i containeren finnes ingen Postgres på localhost. Løses onsdag med Compose:
 egen `db`-container og `ConnectionStrings__DefaultConnection` med `Host=db` som miljøvariabel.
 
@@ -121,7 +121,8 @@ til CI-en finnes i uke 2 — et image som ikke består testene kan aldri deploye
 Løsningsfilen må med før restore, ellers får testprosjektet ingen `project.assets.json` og
 `dotnet test --no-restore` feiler (NETSDK1004).
 
-**3.6 Størrelse:** min ___ MB · fasit ___ MB (fasiten er litt større: krb5 + wget + apt-lag).
+**3.6 Størrelse:** min 99 MB · fasit 103 MB (content size; på disk 352 MB mot 368 MB). Fasiten er litt
+større: krb5 + wget + apt-lag.
 
 ```bash
 podman rm -f labtest
@@ -141,11 +142,11 @@ podman build -f $F/Dockerfile.c -t feil-c . && podman run --rm feil-c   # Ctrl+C
 podman rmi feil-a feil-c
 ```
 
-**A. Feil DLL-navn:** bygget går fint — feilen kommer først ved `run`: ___ (forventet:
-`The application 'Api.dll' does not exist.`). Riktig navn uten å gjette: `--entrypoint ls` lister
+**A. Feil DLL-navn:** bygget går fint — feilen kommer først ved `run`: `The application 'Api.dll' does
+not exist or is not a managed .dll or .exe.` `ls /app` viser `LabApi.dll`. Riktig navn uten å gjette: `--entrypoint ls` lister
 `/app` i imaget. `--entrypoint` må til, ellers blir `ls -la /app` argumenter til `dotnet LabApi.dll`.
 
-**B. COPY-feil:** bygget stopper i stage 2: ___ (forventet: `"/src/app/publish": not found`).
+**B. COPY-feil:** bygget stopper i stage 2: `failed to calculate checksum of ref …: "/src/app/publish": not found`.
 Stage 1 publiserer til `/app/publish` (`-o /app/publish`), ikke under `/src`. Svaret står i Dockerfilen.
 
 **C. Uten restore:** fungerer — `dotnet publish` kjører implisitt restore. Vi eksplisiterer likevel:
