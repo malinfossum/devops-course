@@ -180,8 +180,12 @@ taggen dagen skal ende på.
 
 ### Del 3: rollback-drillen
 
-Kjøres i Codespacet: deploy `sha-4e97289`, se gaten gå rød, rull tilbake til `sha-5156e25` to ganger på
-tid, og avslutt på `sha-83f4d70`. Tidene kommer her.
+Deploy `sha-4e97289`: `curl: (22) The requested URL returned error: 404`, exit 22. Tjenesten lever, men
+døra den spør på finnes ikke lenger.
+
+**Runde 1: 6188 ms** fra `.env`-endringen til `/health` svarte `sha-5156e25`, og `inspect` viste
+`ghcr.io/malinfossum/varde:sha-5156e25`. Så tilbake til `sha-4e97289` (exit 22 igjen). Runde 2 er ikke tatt
+ennå. Dagen endte på `sha-83f4d70`: `/health` exit 0, og `git status -s` var tom, så `.env` er ikke i Git.
 
 **To ulike «returer»:** `git revert` ruller *koden* bakover ved å gå framover: ny commit, nytt image
 (`sha-83f4d70`). Rollbacken ruller *deployen* bakover: et gammelt image, ingen ombygging. Den første tar
@@ -195,5 +199,5 @@ på engelsk, som resten av prosjektet.
 
 ## Gjenstår
 
-- Rollback-drillen (del 3) med to tider, så fylles tidene inn i PR #40 og den merges
+- Runde 2 av rollback-drillen, så fylles begge tidene inn i PR #40 og den merges
 - Peer-test av runbooken: en medstudent ruller tilbake bare fra teksten
