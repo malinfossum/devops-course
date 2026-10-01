@@ -143,7 +143,57 @@ Hoppet over. Pakken er public, så pull trenger ingen innlogging. Push-siden av 
 - DevSecOps-team er blitt vanlig, fordi sikkerhet ikke kan være et eget steg til slutt.
 - I morgen: ClaimTheSquare-oppgaven og DNS. Det var DNS.
 
+## Oppgave 3: rød test, ekte brudd og rollback på stoppeklokke
+
+### Del 1: porten som holder
+
+`main` i Varde er beskyttet, så den røde testen gikk via en PR (#37), ikke en push til `main`. Jeg endret
+én forventet verdi i `PagingTests` fra `[InlineData(7, 7)]` til `[InlineData(7, 8)]`. Lokalt først:
+
+```
+Varde.Tests.Unit.PagingTests.NormalizePage_never_returns_less_than_one(input: 7, expected: 8) [FAIL]
+Assert.Equal() Failure: Values differ
+Expected: 8
+Actual:   7
+Failed!  - Failed:     1, Passed:    35, Skipped:     0, Total:    36
+```
+
+Samme linjer i CI (`Build and test`, exit code 1). `Format check` var grønn: en usann påstand kan godt være
+pent formatert kode. PR-en fikk `BLOCKED`, og GHCR fikk ingen ny tag.
+
+**Forbehold:** docker-jobben var grå, men på en PR er den *alltid* grå (`if: github.event_name == 'push'`).
+Den grå jobben beviser derfor ingenting om `needs` her. Beviset er den røde sjekken som stopper merge,
+og at ingen ny tag dukket opp. Reparert med `git revert` (`7bb1978`), grønt igjen, PR lukket uten merge.
+
+**«Vi har tester» mot en rød test som stopper leveransen:** tester som bare kjøres, er en rapport. En test
+som stopper merge og image, er en port. Forskjellen ligger i `needs` og i branch protection, ikke i testene.
+
+### Del 2: bruddet testene ikke ser
+
+Jeg døpte om `/health` til `/status` (engelsk rutenavn, ikke `/helse`). Alle 36 enhetstester var grønne
+lokalt, og alle sjekker på PR #38 var grønne. Merget som `4e97289`, og imaget **`sha-4e97289`** landet i
+GHCR. Pipelinen så ingenting, fordi testene sjekker logikk og ikke HTTP-flaten. Det er derfor health-gaten
+finnes. Den levende siden ble ikke rørt: `deploy-web.yml` venter på `/api/municipalities`, ikke `/health`.
+
+Reparert med `git revert -m 1` på merge-commiten (PR #39, `83f4d70`), og **`sha-83f4d70`** er den grønne
+taggen dagen skal ende på.
+
+### Del 3: rollback-drillen
+
+Kjøres i Codespacet: deploy `sha-4e97289`, se gaten gå rød, rull tilbake til `sha-5156e25` to ganger på
+tid, og avslutt på `sha-83f4d70`. Tidene kommer her.
+
+**To ulike «returer»:** `git revert` ruller *koden* bakover ved å gå framover: ny commit, nytt image
+(`sha-83f4d70`). Rollbacken ruller *deployen* bakover: et gammelt image, ingen ombygging. Den første tar
+en pipeline-kjøring. Den andre tar sekunder, fordi imaget allerede ligger i registryet.
+
+## Oppgave 4: runbook
+
+Rollback-delen ligger i Varde-README-en i PR #40 (draft): påstand og bevis, tre steg tilbake,
+tag-register, øvingstider og feiljournal med de ordrette feiltekstene fra i dag. Runbooken i Varde er
+på engelsk, som resten av prosjektet.
+
 ## Gjenstår
 
-- Oppgave 3: rød test (via PR, `main` er beskyttet), omdøpt endpoint og rollback-drill med to runder på tid
-- Oppgave 4: rollback-del, tag-register, øvingstider og feiljournal i Varde-runbooken, peer-testet
+- Rollback-drillen (del 3) med to tider, så fylles tidene inn i PR #40 og den merges
+- Peer-test av runbooken: en medstudent ruller tilbake bare fra teksten
