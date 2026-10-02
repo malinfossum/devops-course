@@ -70,7 +70,8 @@ deploy fortsatt ute. Den ruller seg ikke ut halvveis.
 
 1. **Uke 1 mot uke 2:** ingenting av det som kjører, endret seg. Bare hvem som bygger imaget og hvor det kjører.
 2. **Én container:** samme origin, så ingen CORS og ingen ekstra proxy-regel. Varde hadde to origins i
-   Azure-tiden (frontend og API hver for seg), og derfor har API-et en CORS-policy i `Program.cs`.
+   Azure-tiden (frontend og API hver for seg), og derfor hadde API-et en CORS-policy i `Program.cs`.
+   Den fjernet jeg 02.10 i Varde-PR #46, siden ingen nettleser kaller API-et lenger.
 3. **Bevis for hva som kjører:** `podman inspect` på containeren (tag og digest) mot taggen fra den grønne
    kjøringen, og `version` i `/health`.
 4. **`/health` mot en ekte rute:** `/health` sier at prosessen lever. En rute som spør databasen, sier at
@@ -90,5 +91,5 @@ er fikset i Varde-PR #45, sammen med opprydding etter Azure-tiden.
 
 ## Gjenstår
 
-- Peer-test av runbooken: en medstudent ruller tilbake bare ut fra teksten
+- Peer-test av runbooken: droppet. Kurset er ferdig, og jeg rakk ikke å få en medstudent til å kjøre den.
 - Hvis jeg en dag trenger en ekte server: Oracle Always Free er eneste gratis VM med offentlig IP, og den krever kort

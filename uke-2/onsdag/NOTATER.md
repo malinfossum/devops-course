@@ -144,4 +144,4 @@ selv med alle kommandoene riktige.
 - [x] `compose.prod.yml` i repoet, `config`-kjørt ren
 - [x] `/health` melder den taggen jeg deployet (`sha-a581a64`, så `sha-b8e13da`, så tilbake)
 - [x] Begge taggene notert med klokkeslett: `sha-a581a64` 18:21:41, `sha-b8e13da` 18:35:18, rollback 18:36:14
-- [x] Runbook med deploy og rollback i Varde sin README (ikke testet av en annen ennå)
+- [x] Runbook med deploy og rollback i Varde sin README (ikke testet av en annen; peer-testen er droppet)

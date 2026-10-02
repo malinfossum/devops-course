@@ -1,14 +1,14 @@
-# Tirsdag 22.09 — notater
+# Tirsdag 22.09: notater
 
 Kjørt i Codespacet (`podman` = alias for `docker`). Filene ligger i `uke-1/tirsdag/`:
 `HelloContainer/` (oppgave 0–2), `labApi.Dockerfile` (min versjon, oppgave 3) og
-`feilsok/Dockerfile.{a,b,c}` (oppgave 4). Tall merket `___` fylles inn fra terminalen.
+`feilsok/Dockerfile.{a,b,c}` (oppgave 4). Tallene er fylt inn fra terminalen.
 
 ## Oppsett
 
 ```bash
 cd /workspaces/devops-course && git pull
-rm -rf /workspaces/HelloContainer          # den jeg lagde med dotnet new — bruker repo-versjonen
+rm -rf /workspaces/HelloContainer          # den jeg lagde med dotnet new; bruker repo-versjonen
 cd uke-1/tirsdag/HelloContainer
 ```
 
@@ -33,7 +33,7 @@ Samme tekst, ett sekund mellom. Datoen står i amerikansk format: containeren ha
 kultur-innstilling, så .NET faller tilbake på invariant kultur.
 
 **Refleksjon:** Klokken er ulik fordi programmet kjører på nytt hver gang; alt annet er likt fordi
-imaget er en frossen, skrivebeskyttet mal — hver `run` lager en ny container fra nøyaktig de samme
+imaget er en frossen, skrivebeskyttet mal. Hver `run` lager en ny container fra nøyaktig de samme
 lagene, så bare det som skjer i kjøretid kan variere.
 
 Valg jeg tok: stage 2 bruker `runtime:10.0`, ikke `aspnet:10.0`, fordi dette er en console-app uten
@@ -58,7 +58,7 @@ podman images hello-naiv
 `docker images` viser to tall: *content size* er de komprimerte lagene (det som lastes ned og
 pushes), *disk usage* er utpakket på disk. Det naive imaget er drøyt fire ganger så stort på begge.
 
-**Refleksjon:** Det naive imaget har med (1) hele SDK-en — compiler, MSBuild, NuGet-klient — som
+**Refleksjon:** Det naive imaget har med (1) hele SDK-en (compiler, MSBuild, NuGet-klient) som
 bare trengs for å bygge, (2) kildekoden (`Program.cs`, `.csproj`), (3) `obj/`-mellomprodukter og
 NuGet-pakkecachen fra restore. Multi-stage-imaget har bare runtime + `publish/`-mappen.
 
@@ -77,8 +77,8 @@ podman build -t hello .                    # 2.4, andre gang
 **Observert:**
 
 - 2.2: `CACHED` på WORKDIR, COPY csproj og RUN restore (FROM-linjene hentes fra de lokale imagene); bygget på nytt: COPY . ., publish og `COPY --from` i stage 2.
-- 2.3: etter Humanizer bygges COPY csproj, restore, COPY . ., publish og `COPY --from` på nytt — alt fra COPY csproj og nedover, fordi `.csproj` endret seg. Bare WORKDIR var cachet.
-- 2.4: første bygg — lagene over `echo` cachet, `echo` og alt under bygget på nytt. Andre bygg — alt cachet, også `echo`.
+- 2.3: etter Humanizer bygges COPY csproj, restore, COPY . ., publish og `COPY --from` på nytt: alt fra COPY csproj og nedover, fordi `.csproj` endret seg. Bare WORKDIR var cachet.
+- 2.4: i første bygg var lagene over `echo` cachet, mens `echo` og alt under ble bygget på nytt. I andre bygg var alt cachet, også `echo`.
 
 **Refleksjon, regelen i én setning:** Et lag gjenbrukes bare når instruksjonen og alle lagene over
 den er uendret; endrer jeg noe, bygges det laget og alt under det på nytt. Derfor: det som sjelden
@@ -95,16 +95,16 @@ podman build -t labapi .
 podman run -p 8080:8080 --name labtest labapi     # Ctrl+C når feilen har kommet
 podman logs labtest
 podman build -f Dockerfile.fasit -t labapi:fasit .
-podman images labapi                               # ← skjermdump: oppgave-3.png
+podman images labapi                               # leveransen var en skjermdump, se 3.6
 ```
 
 **3.3 `.dockerignore`:** finnes. Den dekker `bin/ obj/ publish/ logs/ .git/ .env .env.* *.env`,
-IDE-mapper, `Dockerfile`, `compose*.yml` og `*.md`. Det jeg savnet: `tests/` — testene trengs ikke
+IDE-mapper, `Dockerfile`, `compose*.yml` og `*.md`. Det jeg savnet: `tests/`. Testene trengs ikke
 i publish-imaget mitt, men fasiten kjører dem i bygget, så de må med der. Ellers komplett.
 
 **3.4 Hva API-et klager over:** `Npgsql.NpgsqlException (0x80004005): Failed to connect to 127.0.0.1:5432`,
 med `SocketException (111): Connection refused` under. Appen kjører `MigrateAsync()` ved oppstart, og `appsettings.json` peker på
-`Host=localhost` — inne i containeren finnes ingen Postgres på localhost. Løses onsdag med Compose:
+`Host=localhost`, og inne i containeren finnes ingen Postgres på localhost. Løses onsdag med Compose:
 egen `db`-container og `ConnectionStrings__DefaultConnection` med `Host=db` som miljøvariabel.
 
 **3.5 Min versjon mot fasiten:**
@@ -112,17 +112,20 @@ egen `db`-container og `ConnectionStrings__DefaultConnection` med `Host=db` som 
 1. Fasiten kopierer `LabApi.slnx` og test-csproj før restore, og kjører `dotnet test` i bygget.
    Min har bare `LabApi.csproj` og hopper over testene.
 2. Fasiten installerer `libkrb5-3` (Npgsql vil ha Kerberos-biblioteket) og `wget` (compose-healthchecken
-   bruker den) i runtime-stage. Min gjør ikke det — ville feilet på healthcheck onsdag.
+   bruker den) i runtime-stage. Min gjør ikke det, og ville feilet på healthcheck onsdag.
 3. Fasiten navngir stage 2 (`AS runtime`) og lar publish restore implisitt; min bruker `--no-restore`.
    Ellers likt: sdk→aspnet, csproj først, non-root, 0.0.0.0:8080, `LabApi.dll`.
 
 Hvorfor testene kjører inne i bygget: rød test = rødt bygg = ikke noe image. Det er kvalitetsporten
-til CI-en finnes i uke 2 — et image som ikke består testene kan aldri deployes, uansett hvem som bygger.
+til CI-en finnes i uke 2: et image som ikke består testene kan aldri deployes, uansett hvem som bygger.
 Løsningsfilen må med før restore, ellers får testprosjektet ingen `project.assets.json` og
 `dotnet test --no-restore` feiler (NETSDK1004).
 
 **3.6 Størrelse:** min 99 MB · fasit 103 MB (content size; på disk 352 MB mot 368 MB). Fasiten er litt
 større: krb5 + wget + apt-lag.
+
+Leveransen var en skjermdump av `podman images`. Den tok jeg ikke: kommandoene kjørte over
+`gh codespace ssh` uten skjerm, så tallene over står i stedet for bildet.
 
 ```bash
 podman rm -f labtest
@@ -142,20 +145,20 @@ podman build -f $F/Dockerfile.c -t feil-c . && podman run --rm feil-c   # Ctrl+C
 podman rmi feil-a feil-c
 ```
 
-**A. Feil DLL-navn:** bygget går fint — feilen kommer først ved `run`: `The application 'Api.dll' does
+**A. Feil DLL-navn:** bygget går fint. Feilen kommer først ved `run`: `The application 'Api.dll' does
 not exist or is not a managed .dll or .exe.` `ls /app` viser `LabApi.dll`. Riktig navn uten å gjette: `--entrypoint ls` lister
 `/app` i imaget. `--entrypoint` må til, ellers blir `ls -la /app` argumenter til `dotnet LabApi.dll`.
 
 **B. COPY-feil:** bygget stopper i stage 2: `failed to calculate checksum of ref …: "/src/app/publish": not found`.
 Stage 1 publiserer til `/app/publish` (`-o /app/publish`), ikke under `/src`. Svaret står i Dockerfilen.
 
-**C. Uten restore:** fungerer — `dotnet publish` kjører implisitt restore. Vi eksplisiterer likevel:
+**C. Uten restore:** fungerer, fordi `dotnet publish` kjører implisitt restore. Vi eksplisiterer likevel:
 med restore som eget lag rett etter `COPY *.csproj` er det cachet ved kodeendringer; den implisitte
 restoren ligger etter `COPY . .` og kjører på nytt for hvert eneste tastetrykk.
 
 ## Knight-spørsmålet
 
-I går: samme image overalt. I dag: hvordan det imaget lages — av en fil i Git som bygger identisk
+I går: samme image overalt. I dag: hvordan det imaget lages: av en fil i Git som bygger identisk
 hver gang, ikke av en tekniker som kopierer filer til sju av åtte servere.
 
 ## Til onsdag
@@ -163,4 +166,4 @@ hver gang, ikke av en tekniker som kopierer filer til sju av åtte servere.
 labApi starter ikke uten Postgres. Hvem starter hvem: Compose starter `db` først, `api` venter på
 `depends_on: condition: service_healthy`. API-et finner databasen på tjenestenavnet `db` i
 compose-nettverket (DNS). Trenger databasen 5 sekunder: healthcheck (`pg_isready`) holder API-et
-tilbake til den svarer — «startet» og «klar» er ikke det samme.
+tilbake til den svarer. «Startet» og «klar» er ikke det samme.

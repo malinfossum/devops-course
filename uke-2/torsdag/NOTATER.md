@@ -193,10 +193,10 @@ en pipeline-kjøring. Den andre tar sekunder, fordi imaget allerede ligger i reg
 
 ## Oppgave 4: runbook
 
-Rollback-delen ligger i Varde-README-en i PR #40 (draft): påstand og bevis, tre steg tilbake,
+Rollback-delen ligger i Varde-README-en (PR #40, merget 01.10): påstand og bevis, tre steg tilbake,
 tag-register, øvingstider og feiljournal med de ordrette feiltekstene fra i dag. Runbooken i Varde er
 på engelsk, som resten av prosjektet.
 
-## Gjenstår
+## Ikke gjort
 
-- Peer-test av runbooken: en medstudent ruller tilbake bare fra teksten
+- Peer-test av runbooken: droppet. Kurset er ferdig, og jeg rakk ikke å få en medstudent til å kjøre den.
