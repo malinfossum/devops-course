@@ -100,7 +100,7 @@ et behov. Override-fila viser at det virker.
 Runbooken står i `README.md` under «Runbook: the API in containers»: `cp .env.example .env`
 → `podman compose up -d --build` → `curl /health`, pluss `down` mot `down -v`.
 
-Peer-test: droppet. Kurset er ferdig, og jeg rakk ikke å få en medstudent til å kjøre den.
+Peer-test: droppet. Kurset er ferdig.
 
 ## Handoff-sjekklisten
 

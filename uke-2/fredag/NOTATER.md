@@ -91,5 +91,5 @@ er fikset i Varde-PR #45, sammen med opprydding etter Azure-tiden.
 
 ## Gjenstår
 
-- Peer-test av runbooken: droppet. Kurset er ferdig, og jeg rakk ikke å få en medstudent til å kjøre den.
+- Peer-test av runbooken: droppet. Kurset er ferdig.
 - Hvis jeg en dag trenger en ekte server: Oracle Always Free er eneste gratis VM med offentlig IP, og den krever kort

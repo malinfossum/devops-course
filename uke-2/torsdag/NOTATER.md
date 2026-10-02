@@ -199,4 +199,4 @@ på engelsk, som resten av prosjektet.
 
 ## Ikke gjort
 
-- Peer-test av runbooken: droppet. Kurset er ferdig, og jeg rakk ikke å få en medstudent til å kjøre den.
+- Peer-test av runbooken: droppet. Kurset er ferdig.
