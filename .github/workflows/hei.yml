@@ -2,6 +2,9 @@ name: Hei
 
 on: workflow_dispatch
 
+permissions:
+  contents: read
+
 jobs:
   hei:
     runs-on: ubuntu-latest
